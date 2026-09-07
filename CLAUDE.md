@@ -5,7 +5,7 @@ Transcribe audios de reuniones a texto y genera un informe estructurado con resu
 ## Arquitectura
 
 ```
-Audio (.m4a/.mp3) → Groq/OpenAI API (transcripción) → DeepSeek API (análisis) → Informe .md
+Audio o video → ffmpeg (extrae audio) → Groq/OpenAI API (transcripción) → DeepSeek API (análisis) → Informe .md
 ```
 
 | Paso | Servicio | Costo |
@@ -27,7 +27,7 @@ python transcribir.py --sin-analisis     # Solo transcribir, sin DeepSeek
 
 ```
 proyecto/
-├── audios/                  ← Poner aquí los archivos de audio
+├── audios/                  ← Poner aquí los archivos de audio o video
 ├── transcripciones/         ← Resultados (generados automáticamente)
 ├── transcribir.py           ← Script principal
 ├── run_now.py               ← Lanzador rápido

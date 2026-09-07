@@ -5,7 +5,7 @@ Transcribe automáticamente audios de reuniones a texto y genera un informe estr
 ## Cómo funciona
 
 ```
-Audio (.m4a / .mp3 / .wav) → API de transcripción → API de análisis → Informe .md
+Audio o video → ffmpeg (extrae audio) → API de transcripción → API de análisis → Informe .md
 ```
 
 | Paso | Servicio | Costo |
@@ -58,7 +58,7 @@ python transcribir.py --sin-analisis
 
 ```
 Transcripcion-audios/
-├── audios/                        ← Coloca aquí los archivos de audio
+├── audios/                        ← Coloca aquí los archivos de audio o video
 ├── transcripciones/               ← Resultados (se generan automáticamente)
 │   └── NOMBRE_YYYYMMDD_HHMMSS/
 │       ├── transcripcion.txt          # Texto completo
@@ -107,9 +107,13 @@ El script elige automáticamente según las claves disponibles en `.env`:
 - Archivos de hasta 25 MB por request
 - El script divide automáticamente audios largos en chunks de 15 minutos
 
-## Formatos de audio soportados
+## Formatos soportados
 
-`.mp3` `.wav` `.m4a` `.ogg` `.flac` `.mp4` `.webm` `.opus` `.wma`
+**Audio:** `.mp3` `.wav` `.m4a` `.ogg` `.flac` `.opus` `.wma`
+
+**Video:** `.mp4` `.webm` `.mkv` `.mov` `.avi`
+
+En los videos, ffmpeg extrae solo la pista de audio y la convierte a MP3 mono 16 kHz antes de enviarla; el video nunca se sube ni cuenta extra en la cuota.
 
 ## Dependencias
 

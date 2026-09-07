@@ -19,7 +19,10 @@ load_dotenv()
 
 console = Console()
 
-AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".ogg", ".flac", ".mp4", ".webm", ".opus", ".wma"}
+AUDIO_EXTENSIONS = {
+    ".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".wma",   # audio
+    ".mp4", ".webm", ".mkv", ".mov", ".avi",                    # video (ffmpeg extrae la pista de audio)
+}
 TRANSCRIPCIONES_DIR = Path(__file__).parent / "transcripciones"
 AUDIOS_DIR = Path(__file__).parent / "audios"
 CONTEXTO_FILE = Path(__file__).parent / "contexto.txt"
