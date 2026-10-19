@@ -1,0 +1,27 @@
+# HTTPS con Caddy delante de la aplicación:
+#   docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
+# Requiere DOMINIO=transcriptor.tu-dominio.org en el archivo .env (ver DESPLIEGUE.md).
+services:
+  web:
+    ports: !override
+      - "127.0.0.1:8001:8001"            # la aplicación ya no se expone: solo Caddy habla con ella
+    environment:
+      COOKIE_SEGURA: "true"              # la cookie de sesión solo viaja por HTTPS
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [web]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMINIO: ${DOMINIO:?Define DOMINIO en el archivo .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_datos:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_datos:
+  caddy_config:

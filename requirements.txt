@@ -1,5 +1,5 @@
-faster-whisper>=1.0.0
-openai>=1.0.0
-python-dotenv>=1.0.0
-rich>=13.0.0
-pydub>=0.25.0
+# Desarrollo y uso por consola: todo lo del servidor web, más lo siguiente
+-r requirements-web.txt
+rich>=13.0.0            # interfaz de la consola (transcribir.py)
+faster-whisper>=1.0.0   # solo para el modo local (sin API key)
+pytest>=8

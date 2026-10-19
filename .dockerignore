@@ -1,0 +1,13 @@
+.git
+.claude
+.env
+.venv
+__pycache__
+*.pyc
+datos
+audios
+transcripciones
+tests
+contexto_*.txt
+*.docx
+!motor/plantillas/acta_ino.docx

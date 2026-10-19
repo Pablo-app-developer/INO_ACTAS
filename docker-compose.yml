@@ -1,0 +1,18 @@
+# Uso:  docker compose up -d --build
+# El primer usuario:  docker compose exec web python -m app.usuarios crear <usuario> --admin
+# Más detalles (HTTPS, copias de seguridad, actualizaciones) en DESPLIEGUE.md
+services:
+  web:
+    build: .
+    image: transcriptor-ino
+    restart: unless-stopped
+    env_file: .env                       # GROQ_API_KEY, DEEPSEEK_API_KEY, ...
+    environment:
+      COOKIE_SEGURA: ${COOKIE_SEGURA:-false}   # ponlo en true cuando haya HTTPS
+    ports:
+      - "8001:8001"                      # con HTTPS delante, cámbialo a "127.0.0.1:8001:8001"
+    volumes:
+      - datos:/datos
+
+volumes:
+  datos:

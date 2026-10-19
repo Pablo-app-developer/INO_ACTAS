@@ -1,0 +1,15 @@
+# Proxy inverso con HTTPS automático (Caddy). DOMINIO viene del archivo .env.
+{$DOMINIO} {
+    encode gzip
+
+    # Sin esto, un archivo de más de 100 MB sería rechazado antes de llegar a la aplicación
+    request_body {
+        max_size 2100MB
+    }
+
+    # Para una intranet sin dominio público, descomenta la línea siguiente: Caddy usa un
+    # certificado propio y hay que instalar su certificado raíz en los equipos para evitar avisos.
+    # tls internal
+
+    reverse_proxy web:8001
+}
