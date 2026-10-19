@@ -11,3 +11,4 @@ tests
 contexto_*.txt
 *.docx
 !motor/plantillas/acta_ino.docx
+copias

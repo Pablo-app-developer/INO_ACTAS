@@ -74,18 +74,19 @@ docker compose up -d --build
 Las bases de datos de versiones anteriores se actualizan solas al arrancar. Los datos están en el volumen
 `datos` y no se pierden al reconstruir.
 
-## 6. Copia de seguridad
+## 6. Copia de seguridad y restauración
 
 Todo lo que importa está en el volumen `datos`: la base de datos (usuarios, plantillas, historial)
-y los resultados de cada transcripción.
+y los resultados de cada transcripción. El script lo respalda sin que tengas que conocer Docker:
 
 ```bash
-# Crear una copia (en el directorio actual)
-docker run --rm -v transcribiraudioyvideo-appparaelino_datos:/datos -v "$PWD":/copia alpine \
-    tar czf /copia/copia-datos-$(date +%F).tar.gz -C /datos .
+python deploy/datos.py respaldar                 # crea copias/copia-datos-AAAA-MM-DD_HHMM.tar.gz
+python deploy/datos.py restaurar copias/copia-datos-2026-10-20_0900.tar.gz
 ```
 
-El nombre del volumen lleva el nombre de la carpeta del proyecto: compruébalo con `docker volume ls`.
+Para la copia se detiene la aplicación unos segundos (así la base de datos queda consistente) y se vuelve a
+iniciar sola. La carpeta `copias/` está fuera de Git porque contiene usuarios y transcripciones reales.
+**Guarda las copias fuera del servidor** (otro equipo, unidad de red) y prueba restaurarlas de vez en cuando.
 
 ## 7. Seguridad: qué está resuelto y qué depende del servidor
 
@@ -100,3 +101,42 @@ al servidor por red o VPN si no debe ser público, y las copias de seguridad (se
 **Privacidad de los audios:** mientras se transcribe, el audio se envía a Groq (o al proveedor configurado) y el texto
 a DeepSeek. Confirma que esto es compatible con la política de datos del INO antes de usar la herramienta con
 reuniones sensibles.
+
+## 8. Instalación temporal en un PC con Windows (solo red interna, HTTP)
+
+Sirve mientras se aprueban los recursos de un servidor. Funciona igual que en un servidor, con estas diferencias:
+el PC debe estar **encendido y sin suspenderse**, y Docker Desktop solo arranca cuando alguien inicia sesión en Windows.
+
+1. Instala Docker Desktop y ábrelo. En *Settings → General* deja marcado *Start Docker Desktop when you sign in*.
+2. Sigue la sección 1 (clonar, `.env`, `docker compose up -d --build`, crear el administrador).
+3. **Permite el acceso desde la red** (una sola vez; PowerShell *como administrador*):
+   ```powershell
+   New-NetFirewallRule -DisplayName "Transcriptor INO (8001)" -Direction Inbound -Protocol TCP -LocalPort 8001 -Action Allow -Profile Domain,Private
+   ```
+4. **Evita que el PC se suspenda** (PowerShell como administrador):
+   ```powershell
+   powercfg /change standby-timeout-ac 0
+   ```
+5. Los usuarios entran por `http://<nombre-o-IP-del-PC>:8001/`. Averigua la IP con `ipconfig`. Pide a TI que le
+   **reserve esa IP al equipo** (o una IP fija); si cambia, la dirección que compartiste deja de funcionar.
+
+Como es HTTP, las contraseñas viajan sin cifrar dentro de la red interna: aceptable en una red de confianza, pero
+no la expongas a internet. Para un servidor definitivo, usa HTTPS (sección 3).
+
+## 9. Migrar al servidor definitivo
+
+La aplicación no depende del PC donde corre: los datos están en un volumen y la configuración en `.env`.
+
+```bash
+# En el PC actual
+python deploy/datos.py respaldar                  # genera copias/copia-datos-....tar.gz
+
+# En el servidor nuevo (con Docker instalado)
+git clone <repositorio> transcriptor && cd transcriptor
+cp .env.example .env                              # o copia el .env del PC anterior
+docker compose up -d --build
+python deploy/datos.py restaurar copia-datos-....tar.gz     # copia el archivo al servidor primero
+```
+
+Después: avisa a los usuarios de la nueva dirección, activa HTTPS (sección 3) y apaga el PC temporal
+(`docker compose down`). Los usuarios, las plantillas y todo el historial pasan tal cual.

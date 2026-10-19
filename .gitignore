@@ -33,3 +33,6 @@ Thumbs.db
 
 # Datos de la aplicación web (base de datos, subidas, resultados)
 datos/
+
+# Copias de seguridad de los datos (contienen usuarios y transcripciones reales)
+copias/
