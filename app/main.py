@@ -162,6 +162,7 @@ def create_app(ajustes: Ajustes | None = None, procesar: Callable = procesar_aud
         return {
             "formatos": sorted(EXTENSIONES_AUDIO),
             "max_subida_mb": ajustes.max_subida_bytes // (1024 * 1024),
+            "conservar_audio": ajustes.conservar_audio,
         }
 
     # -------------------------------------------------------------- contextos

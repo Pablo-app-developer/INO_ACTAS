@@ -8,29 +8,54 @@
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body class="pagina-login">
-  <main class="login">
-    <header class="login-cab">
-      <h1>Transcriptor de reuniones</h1>
-      <p>Instituto Neumológico del Oriente</p>
-    </header>
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    </defs>
+  </svg>
 
-    <section class="tarjeta" aria-labelledby="t-login">
-      <h2 id="t-login">Iniciar sesión</h2>
-      <form id="form-login" novalidate>
-        <div class="campo">
-          <label for="usuario">Usuario</label>
-          <input type="text" id="usuario" name="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
-        </div>
-        <div class="campo">
-          <label for="clave">Contraseña</label>
-          <input type="password" id="clave" name="clave" autocomplete="current-password" required>
-        </div>
-        <p class="error-form" id="error-login" role="alert" hidden></p>
-        <button type="submit" class="btn primario ancho" id="btn-entrar">Entrar</button>
-      </form>
-      <p class="ayuda nota-login">¿No tienes usuario o olvidaste tu contraseña? Solicítalo a quien administra la herramienta.</p>
+  <div class="login-rejilla">
+    <section class="login-marca" aria-label="Presentación">
+      <div class="login-logo">
+        <span class="logo"><svg class="ico"><use href="#i-mic"/></svg></span>
+        <span>
+          <strong>Transcriptor de reuniones</strong>
+          <small>Instituto Neumológico del Oriente</small>
+        </span>
+      </div>
+      <p class="login-lema">De la grabación al acta, sin escribir una línea.</p>
+      <ul class="login-puntos">
+        <li><svg class="ico"><use href="#i-mic"/></svg><span>Transcripción precisa de audio y video, con los nombres y términos de tu equipo.</span></li>
+        <li><svg class="ico"><use href="#i-file"/></svg><span>Acta en Word con el formato del INO, lista para revisar y firmar.</span></li>
+        <li><svg class="ico"><use href="#i-shield"/></svg><span>Cada persona ve únicamente sus propias transcripciones.</span></li>
+      </ul>
     </section>
-  </main>
+
+    <main class="login-formulario">
+      <div class="login-caja">
+        <h1>Iniciar sesión</h1>
+        <p>Ingresa con tu usuario y contraseña.</p>
+
+        <form id="form-login" novalidate>
+          <div class="campo">
+            <label for="usuario">Usuario</label>
+            <input type="text" id="usuario" name="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
+          </div>
+          <div class="campo">
+            <label for="clave">Contraseña</label>
+            <input type="password" id="clave" name="clave" autocomplete="current-password" required>
+          </div>
+          <p class="error-form" id="error-login" role="alert" hidden></p>
+          <button type="submit" class="btn primario grande" id="btn-entrar">Entrar</button>
+        </form>
+
+        <p class="nota-login">¿No tienes usuario o olvidaste tu contraseña? Solicítalo a quien administra la herramienta.</p>
+      </div>
+    </main>
+  </div>
   <script src="/static/login.js"></script>
 </body>
 </html>

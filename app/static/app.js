@@ -20,6 +20,19 @@ function el(etiqueta, props = {}, ...hijos) {
   return nodo;
 }
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/** Icono del sprite de index.html (<symbol id="i-nombre">). */
+function icono(nombre, clase = "ico") {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("class", clase);
+  svg.setAttribute("aria-hidden", "true");
+  const uso = document.createElementNS(SVG_NS, "use");
+  uso.setAttribute("href", `#i-${nombre}`);
+  svg.append(uso);
+  return svg;
+}
+
 function textoError(datos, status) {
   const detalle = datos && datos.detail;
   if (typeof detalle === "string") return detalle;
@@ -58,6 +71,7 @@ function formatearFecha(iso) {
 
 function avisar(texto, tipo = "ok") {
   const aviso = el("div", { class: `aviso ${tipo}` },
+    icono(tipo === "ok" ? "check" : "alert"),
     el("span", {}, texto),
     el("button", { type: "button", "aria-label": "Cerrar aviso", onclick: () => aviso.remove() }, "×"));
   $("#avisos").prepend(aviso);
@@ -99,6 +113,13 @@ function contextoLimpio() {
 
 const hayCambios = () => JSON.stringify(contextoLimpio()) !== estado.base;
 
+/** Marca con una palomita los pasos ya resueltos (archivo elegido, contexto elegido). */
+function actualizarPasos() {
+  $("#paso-1").classList.toggle("completo", Boolean(estado.archivo));
+  $("#paso-2").classList.toggle("completo", Boolean(estado.modo));
+  $("#paso-3").classList.toggle("completo", Boolean(estado.archivo && estado.modo));
+}
+
 /* ===================== archivo ===================== */
 
 function elegirArchivo(archivo) {
@@ -113,9 +134,14 @@ function elegirArchivo(archivo) {
     return;
   }
   estado.archivo = archivo;
+  const esVideo = [".mp4", ".webm", ".mkv", ".mov", ".avi"].includes(extension);
+  $("#archivo-icono").replaceChildren(icono(esVideo ? "video" : "music"));
+  $("#archivo-nombre").textContent = archivo.name;
+  $("#archivo-detalle").textContent = `${formatearBytes(archivo.size)} · ${esVideo ? "video" : "audio"}`;
   $("#zona").classList.add("con-archivo");
-  $("#zona-titulo").textContent = `${archivo.name} (${formatearBytes(archivo.size)})`;
-  $("#ayuda-archivo").textContent = "Haz clic o arrastra otro archivo para cambiarlo.";
+  $("#zona-vacia").hidden = true;
+  $("#zona-archivo").hidden = false;
+  actualizarPasos();
 }
 
 function iniciarZonaArchivo() {
@@ -182,6 +208,7 @@ function alElegirContexto() {
   }
   estado.base = JSON.stringify(contextoLimpio());
   renderEditor(true);
+  actualizarPasos();
 }
 
 /* ===================== editor de contexto ===================== */
@@ -382,10 +409,35 @@ function restablecerBotonEliminar() {
 
 /* ===================== cuenta ===================== */
 
+function iniciales(nombre) {
+  const partes = nombre.trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return "?";
+  return (partes[0][0] + (partes.length > 1 ? partes[partes.length - 1][0] : "")).toUpperCase();
+}
+
+function mostrarCuenta(usuario) {
+  $("#avatar").textContent = iniciales(usuario.nombre);
+  $("#usuario-nombre").textContent = usuario.nombre;
+  $("#menu-nombre").textContent = usuario.nombre;
+  $("#menu-rol").textContent = `${usuario.usuario} · ${usuario.es_admin ? "Administrador" : "Usuario"}`;
+  $("#cuenta").hidden = false;
+}
+
 function iniciarCuenta() {
   const dialogo = $("#dlg-clave");
   const error = $("#error-clave");
+  const menu = $("#menu-cuenta");
   const mostrarError = (texto) => { error.textContent = texto; error.hidden = false; };
+
+  // Los menús desplegables se cierran al hacer clic fuera o con Escape
+  document.addEventListener("click", (e) => {
+    document.querySelectorAll("details.menu[open], details.mas[open]").forEach((d) => {
+      if (!d.contains(e.target)) d.open = false;
+    });
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") document.querySelectorAll("details.menu[open], details.mas[open]").forEach((d) => { d.open = false; });
+  });
 
   $("#btn-salir").addEventListener("click", async () => {
     try { await fetch("/api/logout", { method: "POST" }); } catch { /* se sale igual */ }
@@ -393,6 +445,7 @@ function iniciarCuenta() {
   });
 
   $("#btn-clave").addEventListener("click", () => {
+    menu.open = false;
     $("#form-clave").reset();
     error.hidden = true;
     dialogo.showModal();
@@ -506,7 +559,7 @@ async function enviar(evento) {
   estado.subiendo = true;
   const boton = $("#btn-enviar");
   boton.disabled = true;
-  boton.textContent = "Subiendo…";
+  $("#btn-enviar-texto").textContent = "Subiendo…";
   try {
     await subirArchivo(datos, (cargado, total) => {
       mostrarSubida(cargado / total, cargado < total
@@ -516,13 +569,16 @@ async function enviar(evento) {
     avisar("Archivo recibido. Puedes seguir el avance abajo, en «Mis transcripciones».");
     reiniciarArchivo();
     await cargarTrabajos();
-    $("#t-historial").scrollIntoView({ behavior: "smooth", block: "start" });
+    // En pantallas anchas el historial ya está a la vista; en las estrechas queda debajo
+    if (window.matchMedia("(max-width: 999px)").matches) {
+      $("#t-historial").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   } catch (e) {
     avisar(e.message, "error");
   } finally {
     estado.subiendo = false;
     boton.disabled = false;
-    boton.textContent = "Procesar reunión";
+    $("#btn-enviar-texto").textContent = "Procesar reunión";
     $("#subida").hidden = true;
   }
 }
@@ -531,8 +587,9 @@ function reiniciarArchivo() {
   estado.archivo = null;
   $("#archivo").value = "";
   $("#zona").classList.remove("con-archivo");
-  $("#zona-titulo").textContent = "Arrastra el archivo aquí o haz clic para elegirlo";
-  $("#ayuda-archivo").replaceChildren("Audio o video. Máximo ", el("span", { id: "max-mb" }, estado.config.max_subida_mb), " MB.");
+  $("#zona-vacia").hidden = false;
+  $("#zona-archivo").hidden = true;
+  actualizarPasos();
 }
 
 /* ===================== historial ===================== */
@@ -550,43 +607,61 @@ const esActivo = (t) => t.estado === "en_cola" || t.estado === "procesando";
 const confirmandoEliminar = new Set();
 const estadosPrevios = new Map();
 
-function tarjetaTrabajo(t) {
-  const meta = [
-    formatearFecha(t.creado),
-    t.contexto ? t.contexto.nombre : "Sin contexto",
-    t.duracion ? `${Math.max(1, Math.round(t.duracion / 60))} min de audio` : null,
-    t.sin_analisis ? "solo transcripción" : null,
-    t.acta ? `acta${t.acta.numero ? " " + t.acta.numero : ""}` : null,
-  ].filter(Boolean).join(" · ");
+const ICONO_ESTADO = { en_cola: "clock", procesando: "loader", completado: "check", error: "alert" };
 
+/** Inserta puntos de corte tras _ . - para que un nombre largo se parta en lugares naturales. */
+const nombreLegible = (nombre) => nombre.replace(/([_.\-])/g, "$1​");
+
+const dato = (nombreIcono, texto) => el("span", {}, icono(nombreIcono), texto);
+
+function tarjetaTrabajo(t) {
   const porcentaje = Math.round(t.progreso * 100);
   const confirmando = confirmandoEliminar.has(t.id);
+  const otras = t.archivos.filter((n) => n !== "acta.docx");
 
-  return el("li", { class: "trabajo" },
-    el("div", { class: "trabajo-cab" },
-      el("span", { class: "trabajo-nombre" }, t.archivo),
-      el("span", { class: `insignia ${t.estado}` }, ETIQUETAS_ESTADO[t.estado])),
-    el("div", { class: "trabajo-meta" }, meta),
-    esActivo(t) && el("div", { class: "barra", role: "progressbar", "aria-label": `Avance de ${t.archivo}`,
-      "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(porcentaje) },
-      el("span", { style: `width:${porcentaje}%` })),
-    esActivo(t) && el("p", { class: "trabajo-msg" }, `${t.mensaje || ""} — ${porcentaje} %`),
-    t.estado === "error" && el("p", { class: "trabajo-msg error" }, t.error),
-    ...t.advertencias.map((a) => el("p", { class: "trabajo-msg aviso-t" }, `Aviso: ${a}`)),
-    el("div", { class: "acciones-trabajo" },
-      t.archivos.includes("informe.md") &&
-        el("button", { type: "button", class: "btn chico", onclick: () => verInforme(t) }, "Ver informe"),
-      ...t.archivos.map((nombre) => el("a", {
-        class: `btn chico enlace-btn${nombre === "acta.docx" ? " destacado" : ""}`, href: `/api/trabajos/${t.id}/archivos/${nombre}`, download: "",
-      }, ETIQUETAS_ARCHIVO[nombre])),
-      t.estado !== "procesando" && el("button", {
-        type: "button", class: `btn chico peligro${confirmando ? " confirmar" : ""}`,
-        "aria-label": `Eliminar ${t.archivo}`, onclick: () => eliminarTrabajo(t),
-      }, confirmando ? "¿Seguro? Pulsa de nuevo" : "Eliminar")));
+  return el("li", { class: `trabajo ${t.estado}` },
+    el("div", { class: "trabajo-icono" },
+      icono(ICONO_ESTADO[t.estado], t.estado === "procesando" ? "ico girando" : "ico")),
+    el("div", { class: "trabajo-cuerpo" },
+      el("div", { class: "trabajo-cab" },
+        el("span", { class: "trabajo-nombre" }, nombreLegible(t.archivo)),
+        el("span", { class: `insignia ${t.estado}` }, ETIQUETAS_ESTADO[t.estado])),
+      el("div", { class: "meta" },
+        dato("clock", formatearFecha(t.creado)),
+        dato("users", t.contexto ? t.contexto.nombre : "Sin contexto"),
+        t.duracion ? dato("mic", `${Math.max(1, Math.round(t.duracion / 60))} min de audio`) : null,
+        t.acta ? dato("file", `Acta${t.acta.numero ? " " + t.acta.numero : ""}`) : null,
+        t.sin_analisis ? dato("mic", "Solo transcripción") : null),
+      esActivo(t) && el("div", { class: "barra", role: "progressbar", "aria-label": `Avance de ${t.archivo}`,
+        "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(porcentaje) },
+        el("span", { style: `width:${porcentaje}%` })),
+      esActivo(t) && el("p", { class: "trabajo-msg" }, `${t.mensaje || ""} — ${porcentaje} %`),
+      t.estado === "error" && el("p", { class: "trabajo-msg error" }, t.error),
+      ...t.advertencias.map((a) => el("p", { class: "trabajo-msg aviso-t" }, `Aviso: ${a}`)),
+      el("div", { class: "acciones-trabajo" },
+        t.archivos.includes("informe.md") &&
+          el("button", { type: "button", class: "btn chico", onclick: () => verInforme(t) },
+            icono("eye"), "Ver informe"),
+        t.archivos.includes("acta.docx") && el("a", {
+          class: "btn chico destacado", href: `/api/trabajos/${t.id}/archivos/acta.docx`, download: "",
+        }, icono("download"), "Acta (.docx)"),
+        otras.length > 0 && el("details", { class: "mas" },
+          el("summary", { class: "btn chico" }, "Más descargas", icono("chevron", "ico chevron")),
+          el("div", { class: "mas-panel" }, ...otras.map((nombre) => el("a", {
+            href: `/api/trabajos/${t.id}/archivos/${nombre}`, download: "",
+          }, icono("download"), ETIQUETAS_ARCHIVO[nombre])))),
+        el("span", { class: "separador" }),
+        t.estado !== "procesando" && el("button", {
+          type: "button", class: `btn chico peligro${confirmando ? " confirmar" : " icono-solo"}`,
+          title: "Eliminar", "aria-label": `Eliminar ${t.archivo}`, onclick: () => eliminarTrabajo(t),
+        }, icono("trash"), confirmando ? "¿Seguro? Pulsa de nuevo" : null))));
 }
 
 function renderTrabajos() {
   $("#historial-vacio").hidden = estado.trabajos.length > 0;
+  const contador = $("#cnt-trabajos");
+  contador.hidden = estado.trabajos.length === 0;
+  contador.textContent = String(estado.trabajos.length);
   $("#trabajos").replaceChildren(...estado.trabajos.map(tarjetaTrabajo));
 }
 
@@ -653,14 +728,16 @@ async function iniciar() {
   iniciarCuenta();
   try {
     estado.yo = await api("/api/yo");
-    $("#usuario-nombre").textContent = estado.yo.nombre;
-    $("#cuenta").hidden = false;
+    mostrarCuenta(estado.yo);
     [estado.config] = await Promise.all([api("/api/config"), cargarPlantillas()]);
+    // Solo se promete borrar el audio si el servidor está configurado para hacerlo
+    $("#nota-privacidad").hidden = estado.config.conservar_audio !== false;
   } catch (e) {
     avisar(e.message, "error");
   }
   iniciarZonaArchivo();
   renderSelector("");
+  actualizarPasos();
   await cargarTrabajos();
 }
 

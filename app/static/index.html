@@ -4,145 +4,269 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Transcriptor de reuniones</title>
-  <meta name="description" content="Convierte el audio de una reunión en transcripción e informe.">
+  <meta name="description" content="Convierte la grabación de una reunión en transcripción, informe y acta.">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <header class="cabecera">
-    <div class="contenedor cabecera-fila">
-      <div>
-        <h1>Transcriptor de reuniones</h1>
-        <p>Instituto Neumológico del Oriente</p>
-      </div>
+  <!-- Iconos (trazo simple, estilo Feather). Se usan con <svg class="ico"><use href="#i-nombre"/></svg> -->
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></symbol>
+      <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+      <symbol id="i-video" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+      <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+      <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></symbol>
+      <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+      <symbol id="i-inbox" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+    </defs>
+  </svg>
+
+  <header class="barra-superior">
+    <div class="contenedor ancho barra-fila">
+      <a class="marca" href="/" aria-label="Transcriptor de reuniones, inicio">
+        <span class="logo"><svg class="ico"><use href="#i-mic"/></svg></span>
+        <span class="marca-texto">
+          <strong>Transcriptor de reuniones</strong>
+          <small>Instituto Neumológico del Oriente</small>
+        </span>
+      </a>
+
       <div class="cuenta" id="cuenta" hidden>
-        <span class="cuenta-nombre" id="usuario-nombre"></span>
-        <button type="button" class="btn chico" id="btn-clave">Cambiar contraseña</button>
-        <button type="button" class="btn chico" id="btn-salir">Cerrar sesión</button>
+        <details class="menu" id="menu-cuenta">
+          <summary aria-label="Menú de la cuenta">
+            <span class="avatar" id="avatar" aria-hidden="true"></span>
+            <span class="cuenta-nombre" id="usuario-nombre"></span>
+            <svg class="ico chevron"><use href="#i-chevron"/></svg>
+          </summary>
+          <div class="menu-panel">
+            <div class="menu-datos">
+              <strong id="menu-nombre"></strong>
+              <span id="menu-rol"></span>
+            </div>
+            <button type="button" class="menu-item" id="btn-clave"><svg class="ico"><use href="#i-lock"/></svg>Cambiar contraseña</button>
+            <button type="button" class="menu-item" id="btn-salir"><svg class="ico"><use href="#i-logout"/></svg>Cerrar sesión</button>
+          </div>
+        </details>
       </div>
     </div>
   </header>
 
-  <main class="contenedor">
+  <main class="contenedor ancho">
     <div id="avisos" class="avisos" role="status" aria-live="polite"></div>
 
-    <section aria-labelledby="t-nueva" class="tarjeta">
-      <h2 id="t-nueva">Nueva transcripción</h2>
+    <div class="intro">
+      <h1>Nueva transcripción</h1>
+      <p>Sube la grabación de una reunión y recibe la transcripción, el informe y el acta en Word.</p>
+    </div>
 
-      <form id="form" novalidate>
-        <!-- 1. Archivo -->
-        <fieldset class="paso">
-          <legend><span class="num">1</span> Archivo de la reunión</legend>
-          <label class="zona" id="zona" for="archivo">
-            <input type="file" id="archivo" class="oculto-visual" aria-describedby="ayuda-archivo">
-            <span class="zona-titulo" id="zona-titulo">Arrastra el archivo aquí o haz clic para elegirlo</span>
-            <span class="zona-ayuda" id="ayuda-archivo">Audio o video. Máximo <span id="max-mb">2048</span> MB.</span>
-          </label>
-          <p class="formatos" id="formatos"></p>
-        </fieldset>
+    <div class="rejilla">
+      <section class="tarjeta formulario" aria-labelledby="t-nueva">
+        <h2 id="t-nueva" class="oculto-visual">Datos de la transcripción</h2>
 
-        <!-- 2. Contexto -->
-        <fieldset class="paso">
-          <legend><span class="num">2</span> Contexto de la reunión</legend>
-          <p class="ayuda">El contexto ayuda a reconocer bien los nombres y la terminología, y mejora el informe.</p>
+        <form id="form" novalidate>
+          <!-- 1. Archivo -->
+          <section class="paso" id="paso-1" aria-labelledby="t-paso-1">
+            <span class="num" aria-hidden="true"><span class="num-n">1</span><svg class="ico num-ok"><use href="#i-check"/></svg></span>
+            <div class="paso-cab">
+              <h3 id="t-paso-1">Archivo de la reunión</h3>
+              <p>Audio o video, hasta <span id="max-mb">2048</span> MB.</p>
+            </div>
 
-          <div class="campo">
-            <label for="selector">¿Qué tipo de reunión es?</label>
-            <select id="selector"></select>
-          </div>
+            <label class="zona" id="zona" for="archivo">
+              <input type="file" id="archivo" class="oculto-visual" aria-describedby="formatos">
+              <span class="zona-vacia" id="zona-vacia">
+                <span class="zona-icono"><svg class="ico"><use href="#i-upload"/></svg></span>
+                <span class="zona-titulo">Arrastra el archivo aquí</span>
+                <span class="zona-ayuda">o <span class="enlace">elige uno de tu equipo</span></span>
+              </span>
+              <span class="zona-archivo" id="zona-archivo" hidden>
+                <span class="archivo-icono" id="archivo-icono"></span>
+                <span class="archivo-datos">
+                  <strong id="archivo-nombre"></strong>
+                  <small id="archivo-detalle"></small>
+                </span>
+                <span class="archivo-cambiar">Cambiar</span>
+              </span>
+            </label>
+            <p class="formatos" id="formatos"></p>
+          </section>
 
-          <div id="editor" class="editor" hidden>
-            <div class="campo">
-              <label for="c-nombre">Nombre</label>
-              <input type="text" id="c-nombre" maxlength="120" autocomplete="off">
+          <!-- 2. Contexto -->
+          <section class="paso" id="paso-2" aria-labelledby="t-paso-2">
+            <span class="num" aria-hidden="true"><span class="num-n">2</span><svg class="ico num-ok"><use href="#i-check"/></svg></span>
+            <div class="paso-cab">
+              <h3 id="t-paso-2">Contexto de la reunión</h3>
+              <p>Ayuda a reconocer bien los nombres y la terminología, y mejora el informe.</p>
             </div>
 
             <div class="campo">
-              <label for="c-descripcion">Descripción <span class="opcional">(opcional)</span></label>
-              <textarea id="c-descripcion" rows="2" placeholder="De qué trata esta reunión y quién la convoca"></textarea>
-            </div>
-
-            <details class="bloque" id="det-participantes">
-              <summary>Participantes <span class="contador" id="cnt-participantes"></span></summary>
-              <p class="ayuda">Quienes hablan y quienes solo son mencionados. El cargo ayuda a atribuir correctamente las intervenciones.</p>
-              <div class="tabla-scroll">
-                <table class="participantes">
-                  <thead>
-                    <tr><th scope="col">Nombre</th><th scope="col">Cargo o rol</th><th scope="col">Asiste</th><th scope="col"><span class="oculto-visual">Quitar</span></th></tr>
-                  </thead>
-                  <tbody id="lista-participantes"></tbody>
-                </table>
+              <label for="selector">Tipo de reunión</label>
+              <div class="select-envoltorio">
+                <select id="selector"></select>
+                <svg class="ico"><use href="#i-chevron"/></svg>
               </div>
-              <button type="button" class="btn secundario" id="btn-add-participante">+ Agregar participante</button>
-            </details>
+            </div>
 
-            <details class="bloque" id="det-claves">
-              <summary>Palabras clave <span class="contador" id="cnt-claves"></span></summary>
-              <p class="ayuda">Siglas, nombres propios y términos técnicos. Escribe una y pulsa Enter, o pega una lista separada por comas.</p>
-              <div class="chips" id="chips"></div>
-              <input type="text" id="c-clave" aria-label="Agregar palabra clave" placeholder="Escribe una palabra clave y pulsa Enter" autocomplete="off">
-            </details>
+            <div id="editor" class="editor" hidden>
+              <div class="campo">
+                <label for="c-nombre">Nombre</label>
+                <input type="text" id="c-nombre" maxlength="120" autocomplete="off">
+              </div>
 
-            <details class="bloque" id="det-notas">
-              <summary>Notas adicionales <span class="opcional">(opcional)</span></summary>
-              <p class="ayuda">Cualquier otra información que deba tener en cuenta el informe: normas, sedes, aclaraciones.</p>
-              <textarea id="c-notas" rows="4" aria-label="Notas adicionales"></textarea>
-            </details>
+              <div class="campo">
+                <label for="c-descripcion">Descripción <span class="opcional">(opcional)</span></label>
+                <textarea id="c-descripcion" rows="2" placeholder="De qué trata esta reunión y quién la convoca"></textarea>
+              </div>
 
-            <div class="acciones-contexto">
-              <span class="estado-contexto" id="estado-contexto" aria-live="polite"></span>
-              <label class="check pleno" id="lbl-institucional" hidden>
-                <input type="checkbox" id="chk-institucional">
-                Compartir con todo el INO al guardar como plantilla nueva
+              <details class="bloque" id="det-participantes">
+                <summary>
+                  <svg class="ico"><use href="#i-users"/></svg>
+                  <span class="bloque-titulo">Participantes</span>
+                  <span class="contador" id="cnt-participantes"></span>
+                  <svg class="ico chevron"><use href="#i-chevron"/></svg>
+                </summary>
+                <div class="bloque-cuerpo">
+                  <p class="ayuda">Quienes hablan y quienes solo son mencionados. El cargo ayuda a atribuir bien las intervenciones.</p>
+                  <div class="tabla-scroll">
+                    <table class="participantes">
+                      <thead>
+                        <tr><th scope="col">Nombre</th><th scope="col">Cargo o rol</th><th scope="col">Asiste</th><th scope="col"><span class="oculto-visual">Quitar</span></th></tr>
+                      </thead>
+                      <tbody id="lista-participantes"></tbody>
+                    </table>
+                  </div>
+                  <button type="button" class="btn secundario chico" id="btn-add-participante"><svg class="ico"><use href="#i-plus"/></svg>Agregar participante</button>
+                </div>
+              </details>
+
+              <details class="bloque" id="det-claves">
+                <summary>
+                  <svg class="ico"><use href="#i-tag"/></svg>
+                  <span class="bloque-titulo">Palabras clave</span>
+                  <span class="contador" id="cnt-claves"></span>
+                  <svg class="ico chevron"><use href="#i-chevron"/></svg>
+                </summary>
+                <div class="bloque-cuerpo">
+                  <p class="ayuda">Siglas, nombres propios y términos técnicos. Escribe una y pulsa Enter, o pega una lista separada por comas.</p>
+                  <div class="chips" id="chips"></div>
+                  <input type="text" id="c-clave" aria-label="Agregar palabra clave" placeholder="Escribe una palabra clave y pulsa Enter" autocomplete="off">
+                </div>
+              </details>
+
+              <details class="bloque" id="det-notas">
+                <summary>
+                  <svg class="ico"><use href="#i-file"/></svg>
+                  <span class="bloque-titulo">Notas adicionales</span>
+                  <span class="opcional">(opcional)</span>
+                  <svg class="ico chevron"><use href="#i-chevron"/></svg>
+                </summary>
+                <div class="bloque-cuerpo">
+                  <p class="ayuda">Cualquier otra información que deba tener en cuenta el informe: normas, sedes, aclaraciones.</p>
+                  <textarea id="c-notas" rows="4" aria-label="Notas adicionales"></textarea>
+                </div>
+              </details>
+
+              <div class="acciones-contexto">
+                <p class="estado-contexto" id="estado-contexto" aria-live="polite"></p>
+                <label class="check pleno" id="lbl-institucional" hidden>
+                  <input type="checkbox" id="chk-institucional">
+                  Compartir con todo el INO al guardar como plantilla nueva
+                </label>
+                <div class="botones-fila">
+                  <button type="button" class="btn secundario chico" id="btn-guardar" hidden>Guardar cambios en la plantilla</button>
+                  <button type="button" class="btn secundario chico" id="btn-guardar-nueva">Guardar como plantilla nueva</button>
+                  <button type="button" class="btn peligro chico" id="btn-eliminar-plantilla" hidden>Eliminar plantilla</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 3. Resultado -->
+          <section class="paso ultimo" id="paso-3" aria-labelledby="t-paso-3">
+            <span class="num" aria-hidden="true"><span class="num-n">3</span><svg class="ico num-ok"><use href="#i-check"/></svg></span>
+            <div class="paso-cab">
+              <h3 id="t-paso-3">Resultado</h3>
+              <p>Siempre recibes la transcripción y el informe.</p>
+            </div>
+
+            <div class="opciones">
+              <label class="opcion">
+                <input type="checkbox" id="generar-acta" checked>
+                <span class="opcion-icono"><svg class="ico"><use href="#i-file"/></svg></span>
+                <span class="opcion-texto">
+                  <strong>Acta en Word</strong>
+                  <small>Con el formato del INO: secciones, decisiones y tabla de compromisos.</small>
+                </span>
+                <span class="conmutador" aria-hidden="true"></span>
               </label>
-              <button type="button" class="btn secundario" id="btn-guardar" hidden>Guardar cambios en la plantilla</button>
-              <button type="button" class="btn secundario" id="btn-guardar-nueva">Guardar como plantilla nueva</button>
-              <button type="button" class="btn peligro" id="btn-eliminar-plantilla" hidden>Eliminar plantilla</button>
-            </div>
-          </div>
-        </fieldset>
 
-        <!-- 3. Opciones -->
-        <fieldset class="paso">
-          <legend><span class="num">3</span> Resultado</legend>
-          <label class="check">
-            <input type="checkbox" id="generar-acta" checked>
-            Redactar el acta en Word (formato del INO)
-          </label>
-          <div class="datos-acta" id="datos-acta">
-            <div class="campo">
-              <label for="acta-numero">Número del acta <span class="opcional">(opcional)</span></label>
-              <input type="text" id="acta-numero" maxlength="20" placeholder="Ej. 031" autocomplete="off">
-            </div>
-            <div class="campo">
-              <label for="acta-fecha">Fecha de la reunión</label>
-              <input type="date" id="acta-fecha" required>
-            </div>
-            <div class="campo">
-              <label for="acta-hora">Hora de inicio <span class="opcional">(opcional)</span></label>
-              <input type="text" id="acta-hora" maxlength="40" placeholder="Ej. 8:30 a. m." autocomplete="off">
-            </div>
-          </div>
-          <label class="check">
-            <input type="checkbox" id="sin-analisis">
-            Solo transcribir (sin informe ni acta)
-          </label>
-        </fieldset>
+              <div class="datos-acta" id="datos-acta">
+                <div class="campo">
+                  <label for="acta-numero">Número del acta <span class="opcional">(opcional)</span></label>
+                  <input type="text" id="acta-numero" maxlength="20" placeholder="Ej. 031" autocomplete="off">
+                </div>
+                <div class="campo">
+                  <label for="acta-fecha">Fecha de la reunión</label>
+                  <input type="date" id="acta-fecha" required>
+                </div>
+                <div class="campo">
+                  <label for="acta-hora">Hora de inicio <span class="opcional">(opcional)</span></label>
+                  <input type="text" id="acta-hora" maxlength="40" placeholder="Ej. 8:30 a. m." autocomplete="off">
+                </div>
+              </div>
 
-        <div class="envio">
-          <button type="submit" class="btn primario" id="btn-enviar">Procesar reunión</button>
-          <div class="subida" id="subida" hidden>
-            <div class="barra" role="progressbar" aria-label="Subida del archivo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="subida-barra"></span></div>
-            <span id="subida-texto"></span>
+              <label class="opcion">
+                <input type="checkbox" id="sin-analisis">
+                <span class="opcion-icono"><svg class="ico"><use href="#i-mic"/></svg></span>
+                <span class="opcion-texto">
+                  <strong>Solo transcribir</strong>
+                  <small>Sin informe ni acta: únicamente el texto de la reunión.</small>
+                </span>
+                <span class="conmutador" aria-hidden="true"></span>
+              </label>
+            </div>
+          </section>
+
+          <div class="envio">
+            <button type="submit" class="btn primario grande" id="btn-enviar">
+              <svg class="ico"><use href="#i-upload"/></svg><span id="btn-enviar-texto">Procesar reunión</span>
+            </button>
+            <p class="privacidad" id="nota-privacidad" hidden><svg class="ico"><use href="#i-shield"/></svg>El audio se elimina del servidor al terminar.</p>
+            <div class="subida" id="subida" hidden>
+              <div class="barra" role="progressbar" aria-label="Subida del archivo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="subida-barra"></span></div>
+              <span id="subida-texto"></span>
+            </div>
           </div>
+        </form>
+      </section>
+
+      <aside class="tarjeta historial" aria-labelledby="t-historial">
+        <div class="historial-cab">
+          <h2 id="t-historial">Mis transcripciones</h2>
+          <span class="insignia-num" id="cnt-trabajos" hidden></span>
         </div>
-      </form>
-    </section>
-
-    <section aria-labelledby="t-historial" class="tarjeta">
-      <h2 id="t-historial">Mis transcripciones</h2>
-      <p class="vacio" id="historial-vacio" hidden>Aún no hay transcripciones. Sube un archivo para empezar.</p>
-      <ul class="trabajos" id="trabajos"></ul>
-    </section>
+        <div class="vacio" id="historial-vacio" hidden>
+          <span class="vacio-icono"><svg class="ico"><use href="#i-inbox"/></svg></span>
+          <strong>Aún no hay transcripciones</strong>
+          <p>Cuando subas una reunión, aparecerá aquí con su avance y sus descargas.</p>
+        </div>
+        <ul class="trabajos" id="trabajos"></ul>
+      </aside>
+    </div>
   </main>
 
   <dialog id="dlg-clave" aria-labelledby="dlg-clave-titulo">
@@ -162,7 +286,7 @@
       </div>
       <p class="error-form" id="error-clave" role="alert" hidden></p>
       <div class="acciones-dialogo">
-        <button type="button" class="btn" id="clave-cancelar">Cancelar</button>
+        <button type="button" class="btn secundario" id="clave-cancelar">Cancelar</button>
         <button type="submit" class="btn primario" id="clave-guardar">Guardar contraseña</button>
       </div>
     </form>
@@ -171,7 +295,7 @@
   <dialog id="visor" aria-labelledby="visor-titulo">
     <div class="visor-cab">
       <h2 id="visor-titulo">Informe</h2>
-      <button type="button" class="btn secundario" id="visor-cerrar">Cerrar</button>
+      <button type="button" class="btn secundario chico" id="visor-cerrar"><svg class="ico"><use href="#i-x"/></svg>Cerrar</button>
     </div>
     <pre id="visor-texto" tabindex="0"></pre>
   </dialog>
