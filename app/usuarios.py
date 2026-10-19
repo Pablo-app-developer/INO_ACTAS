@@ -1,14 +1,14 @@
 """Administración de usuarios desde la consola.
 
-  python -m app.usuarios crear diego --nombre "Diego Lozano" --admin
+  python -m app.usuarios crear pablo --nombre "Pablo Ramírez" --admin
   python -m app.usuarios listar
-  python -m app.usuarios clave diego              # restablecer la contraseña
-  python -m app.usuarios desactivar diego         # bloquea el acceso sin borrar nada
-  python -m app.usuarios activar diego
-  python -m app.usuarios admin diego              # dar permisos de administrador (--quitar para retirarlos)
-  python -m app.usuarios eliminar diego           # borra el usuario y TODAS sus transcripciones
+  python -m app.usuarios clave pablo              # restablecer la contraseña
+  python -m app.usuarios desactivar pablo         # bloquea el acceso sin borrar nada
+  python -m app.usuarios activar pablo
+  python -m app.usuarios admin pablo              # dar permisos de administrador (--quitar para retirarlos)
+  python -m app.usuarios eliminar pablo           # borra el usuario y TODAS sus transcripciones
 
-Con Docker:  docker compose exec web python -m app.usuarios crear diego --admin
+Con Docker:  docker compose exec web python -m app.usuarios crear pablo --admin
 La contraseña se pide por teclado sin mostrarse. Úsala con --clave solo en scripts: queda en el historial.
 """
 import argparse
