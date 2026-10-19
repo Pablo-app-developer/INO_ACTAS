@@ -1,0 +1,37 @@
+Reunión semanal del Observatorio de Datos e Innovación Clínica del Instituto Neumológico del Oriente (INO), Bucaramanga, Santander. Hablan: Ing. Rafael Ortiz, Dra. Leslie Vargas, Pablo Ramírez, Olga Lucía Ramírez, Sandra Juliana Rueda Velásquez, Ximena Landinez, Ing. Mayra Bonilla, Ing. Leidy Villabona, Bellanid Rodríguez, Freddy Valderrama, Silvia Corzo. Mencionan a Diego, Dr. Téllez, Dr. Julián, Dr. Jürg Niederbacher, Angélica, Dr. Bolívar, Karen, Juan David, Marisela. Términos: Datamet 2.0, Medicloud, Minería INO, innovaino, BigQuery, PostgreSQL, Looker, FOSUNAB, EduFoscal, SISPRO, RIPS, CIE-10, CIE-11, Ecopetrol, SURA, EPS, polisomnografía, CPAP, BPAP, apnea obstructiva del sueño, índice de apnea-hipopnea, IAH, Epworth, STOP-BANG, St. George, espirometría, ergoespirometría, DLCO, caminata de 6 minutos, estaciones, parametrización, rutas de atención.
+
+---
+
+CONTEXTO AMPLIADO (alimenta el análisis posterior; Whisper solo lee los primeros 800 caracteres, por eso lo esencial va arriba)
+
+De cada sesión se levanta un acta numerada consecutivamente.
+
+PARTICIPANTES Y ROLES:
+- Ing. Rafael Ortiz — líder técnico
+- Dra. Leslie Vargas — coordinadora del Observatorio
+- Pablo Ramírez — gestor de datos; anfitrión en Zoom, su cuenta aparece como "Instituto Neumologico del Oriente"
+- Olga Lucía Ramírez — auxiliar de datos
+- Sandra Juliana Rueda Velásquez — epidemióloga
+- Ximena Landinez — referente clínica de programas integrales
+- Ing. Mayra Bonilla — TI e infraestructura
+- Ing. Leidy Villabona — calidad; lidera el proyecto Datamet 2.0
+- Bellanid Rodríguez
+- Freddy Valderrama — Unidad de Sueño
+- Silvia Corzo — representa a la Ing. Leidy Villabona
+
+MENCIONADOS CON FRECUENCIA (no asisten):
+Diego (desarrollador externo de Datamet 2.0), Dr. Téllez (aprueba la herramienta de ergoespirometría), Dr. Julián (deportólogo, rehabilitación avanzada), Dr. Jürg Niederbacher (revisor clínico), Angélica (líder del laboratorio de función pulmonar; no es médica, no usar "Dra."), Dr. Bolívar (dirección), Karen (área administrativa), Juan David (TI), Marisela (validación de datos de sueño), Dra. Diana Cano, Laura (comunicaciones), Sara (apropiación social del conocimiento).
+
+SEDES Y ENTIDADES: sede principal, Cabecera, FOSUNAB, San Gil, Barrancabermeja, EduFoscal, Hospital Internacional de Colombia (HIC), Fundación Cardioinfantil.
+
+PLATAFORMAS Y SERVIDORES: Datamet, Datamet 1.0, Datamet 2.0, Medicloud, Medicloud 2.0, Minería INO, innovaino, BigQuery, PostgreSQL, Looker, Data Studio, Power BI, Google Apps Script, Google Colab, Visual Studio Code, GitHub, Render, Hostinger, Docker, dockerizar, ODBC, API, túnel, certificados, HTTPS, servidor público, servidor privado, espejo, migración, desidentificar, gobernanza de datos, soberanía tecnológica, cumplimiento, trazabilidad.
+
+RUTAS Y PROGRAMAS: ruta, rutas de atención, modelo de atención, programas integrales, estación, estaciones, estación cero, parametrización, parametrizar, servicios, fases, cohortes, EPS, aseguradora, Ecopetrol, SURA, egreso, ingreso, alertas, adherencia, Call Center, digiturno.
+
+DATOS CLÍNICOS: historia clínica, historia clínica electrónica, interoperabilidad, CIE-10, CIE-11, diagnóstico principal, diagnósticos secundarios, RIPS, SISPRO, cubos de información, IPS, facturación, habilitación, indicadores, base analítica, bases de datos analíticas, calidad del dato, depuración, cargue de datos.
+
+PRUEBAS Y ESCALAS: espirometría, capacidad de difusión, DLCO, ergoespirometría, reto con metacolina, presiones respiratorias máximas, PIM, PEM, pletismografía, caminata de 6 minutos, sit to stand, isotime, prueba de resistencia, antropometría, IMC, índice de masa corporal, perímetro de cuello, perímetro abdominal, escala de Borg, disnea, St. George, SGRQ, Epworth, STOP-BANG, Berlín, cuestionarios de síntomas.
+
+SUEÑO: polisomnografía, polisomnografía basal, titulación, CPAP, BPAP, apnea obstructiva del sueño, AOS, apnea, hipopnea, índice de apnea-hipopnea, IAH, severidad, saturación de oxígeno, desaturación, latencia, sueño REM, microdespertares, eficiencia del sueño, máscara, presión terapéutica.
+
+OTROS: EPOC, asma, nódulo pulmonar, obesidad, rehabilitación pulmonar, rehabilitación avanzada, rehabilitador, rehabilitadora, gestor, gestora, teleconsulta, telemedicina, pediátrico, exacerbaciones, SCORE2-LAC, riesgo cardiovascular, clusterización, machine learning, boletín, sala de análisis de situación, apropiación social del conocimiento, comité, seguimiento, cronograma, entregable, deuda técnica, producto mínimo viable, MVP.

@@ -1,360 +1,91 @@
-import os
+"""CLI del transcriptor de reuniones. La lógica vive en el paquete `motor`."""
 import sys
-import json
-import tempfile
 from pathlib import Path
-from datetime import datetime
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from openai import OpenAI
-from pydub import AudioSegment
 
-load_dotenv()
+from motor import EXTENSIONES_AUDIO, OpcionesProceso, guardar_resultados, procesar_audio
+from motor.config import cliente_transcripcion
+from motor.transcripcion import ErrorTranscripcion
 
 console = Console()
 
-AUDIO_EXTENSIONS = {
-    ".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".wma",   # audio
-    ".mp4", ".webm", ".mkv", ".mov", ".avi",                    # video (ffmpeg extrae la pista de audio)
-}
 TRANSCRIPCIONES_DIR = Path(__file__).parent / "transcripciones"
 AUDIOS_DIR = Path(__file__).parent / "audios"
-CONTEXTO_FILE = Path(__file__).parent / "contexto.txt"
-
-GROQ_API_KEY    = os.getenv("GROQ_API_KEY")
-OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
-
-# Chunks de 15 min exportados a MP3 64kbps mono ≈ 7 MB (límite API: 25 MB)
-CHUNK_API_MINUTOS = 15
-MAX_CHARS_ANALISIS = 12000
+PROYECTO_DIR = Path(__file__).parent
+# Se resuelve en main() a partir de --contexto. None = transcribir sin contexto.
+CONTEXTO_FILE = None
 
 
 # ---------------------------------------------------------------------------
 # Contexto
 # ---------------------------------------------------------------------------
 
-def cargar_contexto() -> str:
-    if CONTEXTO_FILE.exists():
-        contenido = CONTEXTO_FILE.read_text(encoding="utf-8").strip()
-        if contenido:
-            console.print(f"[dim]Contexto cargado ({len(contenido)} caracteres)[/dim]")
-            return contenido
-    return ""
+def listar_contextos() -> dict:
+    """Mapea alias -> ruta de cada contexto_*.txt de la carpeta del proyecto."""
+    contextos = {}
+    for ruta in sorted(PROYECTO_DIR.glob("contexto*.txt")):
+        alias = ruta.stem.removeprefix("contexto").strip("_-").lower()
+        contextos[alias or "contexto"] = ruta
+    return contextos
 
 
-# ---------------------------------------------------------------------------
-# Cliente de transcripción (Groq > OpenAI > local)
-# ---------------------------------------------------------------------------
+def resolver_contexto(valor: str):
+    """Traduce el valor de --contexto a una ruta concreta.
 
-def _get_cliente_transcripcion() -> tuple:
-    """Devuelve (client, model_name, nombre_servicio) según las keys disponibles."""
-    if GROQ_API_KEY:
-        client = OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
-        return client, "whisper-large-v3", "Groq (gratis)"
-    if OPENAI_API_KEY:
-        client = OpenAI(api_key=OPENAI_API_KEY)
-        return client, "whisper-1", "OpenAI"
-    return None, None, "local"
+    Acepta una ruta directa o un alias (basta un fragmento del nombre:
+    'observatorio' encuentra contexto_reuniones_observatorio.txt).
+    Aborta con un mensaje claro si no hay coincidencia o si es ambigua.
+    """
+    disponibles = listar_contextos()
 
-
-# ---------------------------------------------------------------------------
-# Split de audio para API (MP3 64 kbps mono → archivos pequeños)
-# ---------------------------------------------------------------------------
-
-def split_audio_para_api(ruta_audio: Path) -> list[tuple[Path, float]]:
-    """Divide el audio en chunks ligeros para enviar a la API."""
-    console.print("[dim]Cargando audio...[/dim]")
-    audio = AudioSegment.from_file(str(ruta_audio))
-    audio = audio.set_channels(1).set_frame_rate(16000)  # mono, 16 kHz
-    duracion_ms = len(audio)
-    chunk_ms = CHUNK_API_MINUTOS * 60 * 1000
-
-    chunks = []
-    for i, inicio in enumerate(range(0, duracion_ms, chunk_ms)):
-        fin = min(inicio + chunk_ms, duracion_ms)
-        trozo = audio[inicio:fin]
-        tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
-        trozo.export(tmp.name, format="mp3", bitrate="64k")
-        size_mb = Path(tmp.name).stat().st_size / 1_048_576
-        chunks.append((Path(tmp.name), inicio / 1000))
-        console.print(
-            f"  [dim]Chunk {i+1}: {inicio/1000:.0f}s → {fin/1000:.0f}s  ({size_mb:.1f} MB)[/dim]"
-        )
-
-    return chunks
-
-
-# ---------------------------------------------------------------------------
-# Transcripción con API en la nube
-# ---------------------------------------------------------------------------
-
-def _build_whisper_prompt() -> str:
-    """Usa contexto.txt como prompt de vocabulario para Whisper.
-    Whisper calibra su vocabulario con este texto (no lo interpreta como instrucción).
-    Límite efectivo: ~224 tokens; el texto se trunca automáticamente."""
-    contexto = cargar_contexto()
-    # Limitar a ~800 caracteres para no superar el límite de tokens de Whisper
-    return contexto[:800] if contexto else ""
-
-
-def transcribir_con_api(ruta_audio: Path, client, model_name: str) -> tuple[str, list]:
-    duracion_total = AudioSegment.from_file(str(ruta_audio)).duration_seconds
-    console.print(f"[green]Duración total:[/green] {duracion_total/60:.1f} minutos")
-
-    chunks = split_audio_para_api(ruta_audio)
-    total_chunks = len(chunks)
-    console.print(f"[cyan]Enviando {total_chunks} chunk(s) a la API...[/cyan]")
-
-    whisper_prompt = _build_whisper_prompt()
-    segmentos = []
-    texto_completo = []
-
-    for i, (chunk_path, offset) in enumerate(chunks, 1):
-        console.print(f"\n[yellow]--- Chunk {i}/{total_chunks} ---[/yellow]")
-        try:
-            with open(chunk_path, "rb") as f:
-                resultado = client.audio.transcriptions.create(
-                    model=model_name,
-                    file=f,
-                    language="es",
-                    response_format="verbose_json",
-                    prompt=whisper_prompt,
-                )
-
-            segs = getattr(resultado, "segments", None) or []
-            if segs:
-                for seg in segs:
-                    segmentos.append({
-                        "inicio": round(offset + seg.start, 2),
-                        "fin":    round(offset + seg.end,   2),
-                        "texto":  seg.text.strip(),
-                    })
-                    texto_completo.append(seg.text.strip())
-            else:
-                # Fallback: la API devolvió solo texto plano
-                texto = (getattr(resultado, "text", "") or "").strip()
-                if texto:
-                    segmentos.append({"inicio": offset, "fin": offset, "texto": texto})
-                    texto_completo.append(texto)
-
-            console.print(f"  [green]Chunk {i} completado[/green]")
-        except Exception as e:
-            console.print(f"  [red]Error en chunk {i}: {e}[/red]")
-        finally:
-            chunk_path.unlink(missing_ok=True)
-
-    return " ".join(texto_completo), segmentos
-
-
-# ---------------------------------------------------------------------------
-# Transcripción local (fallback sin ninguna API key)
-# ---------------------------------------------------------------------------
-
-def transcribir_local(ruta_audio: Path, modelo: str = "base") -> tuple[str, list]:
-    from faster_whisper import WhisperModel
-    from pydub import AudioSegment as AS
-
-    console.print(f"[cyan]Cargando modelo Whisper local '{modelo}'...[/cyan]")
-    console.print("[yellow]AVISO: la transcripción local en CPU puede ser muy lenta.[/yellow]")
-    whisper = WhisperModel(modelo, device="cpu", compute_type="int8")
-
-    duracion_total = AS.from_file(str(ruta_audio)).duration_seconds
-    console.print(f"[green]Duración total:[/green] {duracion_total/60:.1f} minutos")
-
-    chunk_ms = CHUNK_API_MINUTOS * 60 * 1000
-    audio = AS.from_file(str(ruta_audio))
-    duracion_ms = len(audio)
-
-    segmentos = []
-    texto_completo = []
-
-    for i, inicio in enumerate(range(0, duracion_ms, chunk_ms)):
-        fin = min(inicio + chunk_ms, duracion_ms)
-        trozo = audio[inicio:fin]
-        tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-        trozo.export(tmp.name, format="wav")
-        chunk_path = Path(tmp.name)
-        offset = inicio / 1000
-
-        console.print(f"\n[yellow]--- Chunk {i+1} ---[/yellow]")
-        try:
-            segs, _ = whisper.transcribe(
-                str(chunk_path),
-                language="es",
-                beam_size=5,
-                vad_filter=True,
-                vad_parameters={"min_silence_duration_ms": 500},
-            )
-            for seg in segs:
-                segmentos.append({
-                    "inicio": round(offset + seg.start, 2),
-                    "fin":    round(offset + seg.end,   2),
-                    "texto":  seg.text.strip(),
-                })
-                texto_completo.append(seg.text.strip())
-            console.print(f"  [green]Chunk {i+1} completado[/green]")
-        except Exception as e:
-            console.print(f"  [red]Error en chunk {i+1}: {e}[/red]")
-        finally:
-            chunk_path.unlink(missing_ok=True)
-
-    return " ".join(texto_completo), segmentos
-
-
-# ---------------------------------------------------------------------------
-# Análisis con DeepSeek
-# ---------------------------------------------------------------------------
-
-def _dividir_texto(texto: str, max_chars: int) -> list[str]:
-    if len(texto) <= max_chars:
-        return [texto]
-    bloques = []
-    inicio = 0
-    while inicio < len(texto):
-        fin = inicio + max_chars
-        if fin >= len(texto):
-            bloques.append(texto[inicio:])
-            break
-        corte = texto.rfind(". ", inicio, fin)
-        if corte == -1:
-            corte = texto.rfind(" ", inicio, fin)
-        if corte == -1:
-            corte = fin
+    def _abortar(mensaje: str):
+        console.print(f"[red]{mensaje}[/red]")
+        if disponibles:
+            console.print("\n[bold]Contextos disponibles:[/bold]")
+            for alias, ruta in disponibles.items():
+                console.print(f"  [cyan]{alias}[/cyan]  →  {ruta.name}")
+            console.print("\nEjemplo: [dim]python transcribir.py \"audio.m4a\" --contexto "
+                          f"{next(iter(disponibles))}[/dim]")
         else:
-            corte += 1
-        bloques.append(texto[inicio:corte].strip())
-        inicio = corte
-    return [b for b in bloques if b]
+            console.print(f"[yellow]No se encontró ningún archivo contexto*.txt en {PROYECTO_DIR}[/yellow]")
+        console.print("\nPara transcribir sin contexto: [dim]--sin-contexto[/dim]")
+        sys.exit(1)
+
+    ruta_directa = Path(valor)
+    if ruta_directa.suffix.lower() == ".txt":
+        if not ruta_directa.is_absolute():
+            ruta_directa = PROYECTO_DIR / ruta_directa
+        if ruta_directa.exists():
+            return ruta_directa
+        _abortar(f"Archivo de contexto no encontrado: {valor}")
+
+    clave = valor.strip().lower()
+    if clave in disponibles:
+        return disponibles[clave]
+
+    coincidencias = [alias for alias in disponibles if clave in alias]
+    if len(coincidencias) == 1:
+        return disponibles[coincidencias[0]]
+    if len(coincidencias) > 1:
+        _abortar(f"'{valor}' es ambiguo, coincide con: {', '.join(coincidencias)}")
+    _abortar(f"No hay ningún contexto que coincida con '{valor}'.")
 
 
-def analizar_con_deepseek(texto: str, nombre_reunion: str) -> dict:
-    if not DEEPSEEK_API_KEY:
-        console.print("[yellow]Sin DEEPSEEK_API_KEY — se omite el análisis.[/yellow]")
-        return {}
-
-    client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
-    contexto = cargar_contexto()
-
-    bloque_contexto = ""
-    if contexto:
-        bloque_contexto = f"""\n\nCONTEXTO DE LA REUNIÓN (úsalo como referencia principal):
----
-{contexto}
----\n"""
-
-    bloques = _dividir_texto(texto, MAX_CHARS_ANALISIS)
-    if len(bloques) > 1:
-        console.print(
-            f"[cyan]Texto largo ({len(texto):,} chars) — resumiendo {len(bloques)} bloques...[/cyan]"
-        )
-        resumenes = []
-        for i, bloque in enumerate(bloques, 1):
-            console.print(f"  [dim]Resumiendo bloque {i}/{len(bloques)}...[/dim]")
-            resp = client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[{
-                    "role": "user",
-                    "content": (
-                        "Resume este fragmento de reunión conservando decisiones, "
-                        f"compromisos, nombres y temas clave. Sé conciso.\n\n{bloque}"
-                    ),
-                }],
-                max_tokens=800,
-                temperature=0.2,
-            )
-            resumenes.append(resp.choices[0].message.content)
-        texto_para_analisis = "\n\n---\n\n".join(resumenes)
-    else:
-        texto_para_analisis = texto
-
-    prompt = f"""Eres un asistente especializado en análisis de reuniones de empresa.
-Analiza la siguiente transcripción y extrae:
-{bloque_contexto}
-1. **RESUMEN EJECUTIVO** (3-5 oraciones)
-2. **PARTICIPANTES IDENTIFICADOS**
-3. **TEMAS TRATADOS**
-4. **DECISIONES TOMADAS**
-5. **TAREAS Y COMPROMISOS** (quién, qué, cuándo)
-6. **PRÓXIMOS PASOS**
-
-Transcripción "{nombre_reunion}":
----
-{texto_para_analisis}
----
-
-Responde en español, formato Markdown."""
-
-    console.print("[cyan]Analizando con DeepSeek...[/cyan]")
-    response = client.chat.completions.create(
-        model="deepseek-chat",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=2000,
-        temperature=0.3,
-    )
-    return {"analisis": response.choices[0].message.content}
-
-
-# ---------------------------------------------------------------------------
-# Guardado de resultados
-# ---------------------------------------------------------------------------
-
-def formatear_tiempo(segundos: float) -> str:
-    m, s = divmod(int(segundos), 60)
-    h, m = divmod(m, 60)
-    return f"{h:02d}:{m:02d}:{s:02d}" if h else f"{m:02d}:{s:02d}"
-
-
-def guardar_resultados(ruta_audio: Path, texto: str, segmentos: list, analisis: dict) -> Path:
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    carpeta_salida = TRANSCRIPCIONES_DIR / f"{ruta_audio.stem}_{timestamp}"
-    carpeta_salida.mkdir(parents=True, exist_ok=True)
-
-    (carpeta_salida / "transcripcion.txt").write_text(
-        f"TRANSCRIPCIÓN: {ruta_audio.name}\n"
-        f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
-        + "=" * 60 + "\n\n" + texto,
-        encoding="utf-8",
-    )
-
-    with open(carpeta_salida / "transcripcion_tiempos.txt", "w", encoding="utf-8") as f:
-        f.write(f"TRANSCRIPCIÓN CON TIEMPOS: {ruta_audio.name}\n")
-        f.write(f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n")
-        f.write("=" * 60 + "\n\n")
-        for seg in segmentos:
-            f.write(f"[{formatear_tiempo(seg['inicio'])} → {formatear_tiempo(seg['fin'])}]\n")
-            f.write(f"{seg['texto']}\n\n")
-
-    with open(carpeta_salida / "informe.md", "w", encoding="utf-8") as f:
-        f.write(f"# Informe de Reunión: {ruta_audio.stem}\n\n")
-        f.write(f"**Archivo:** {ruta_audio.name}  \n")
-        f.write(f"**Fecha de procesamiento:** {datetime.now().strftime('%d/%m/%Y %H:%M')}  \n")
-        f.write(f"**Segmentos transcritos:** {len(segmentos)}  \n\n---\n\n")
-        if analisis.get("analisis"):
-            f.write(analisis["analisis"])
-            f.write("\n\n---\n\n")
-        f.write("## Transcripción Completa\n\n" + texto + "\n\n---\n\n")
-        f.write("## Transcripción con Tiempos\n\n")
-        for seg in segmentos:
-            f.write(f"**[{formatear_tiempo(seg['inicio'])} → {formatear_tiempo(seg['fin'])}]**  \n")
-            f.write(f"{seg['texto']}\n\n")
-
-    with open(carpeta_salida / "datos.json", "w", encoding="utf-8") as f:
-        json.dump({
-            "archivo": ruta_audio.name,
-            "fecha": datetime.now().isoformat(),
-            "segmentos": segmentos,
-            "texto_completo": texto,
-            "analisis": analisis.get("analisis", ""),
-        }, f, ensure_ascii=False, indent=2)
-
-    return carpeta_salida
+def cargar_contexto() -> str:
+    if CONTEXTO_FILE is None:
+        return ""
+    contenido = CONTEXTO_FILE.read_text(encoding="utf-8").strip()
+    if not contenido:
+        console.print(f"[yellow]Aviso: {CONTEXTO_FILE.name} está vacío.[/yellow]")
+        return ""
+    console.print(f"[dim]Contexto cargado desde {CONTEXTO_FILE.name} ({len(contenido)} caracteres)[/dim]")
+    return contenido
 
 
 # ---------------------------------------------------------------------------
@@ -373,14 +104,19 @@ def ya_fue_procesado(ruta_audio: Path) -> bool:
 def listar_audios() -> list[Path]:
     if not AUDIOS_DIR.exists():
         return []
-    return sorted(f for f in AUDIOS_DIR.iterdir() if f.suffix.lower() in AUDIO_EXTENSIONS)
+    return sorted(f for f in AUDIOS_DIR.iterdir() if f.suffix.lower() in EXTENSIONES_AUDIO)
+
+
+def _mostrar_progreso(etapa: str, mensaje: str, fraccion) -> None:
+    console.print(f"  [dim]{mensaje}[/dim]")
 
 
 # ---------------------------------------------------------------------------
 # Procesamiento principal
 # ---------------------------------------------------------------------------
 
-def procesar_archivo(ruta_audio: Path, modelo: str = "base", forzar: bool = False, sin_analisis: bool = False) -> None:
+def procesar_archivo(ruta_audio: Path, modelo: str = "base", forzar: bool = False,
+                     sin_analisis: bool = False) -> None:
     if not forzar and ya_fue_procesado(ruta_audio):
         console.print(
             f"[yellow]Omitiendo '{ruta_audio.name}' — ya transcrito. "
@@ -390,25 +126,24 @@ def procesar_archivo(ruta_audio: Path, modelo: str = "base", forzar: bool = Fals
 
     console.print(Panel(f"[bold]Procesando:[/bold] {ruta_audio.name}", style="blue"))
 
-    client, model_name, servicio = _get_cliente_transcripcion()
-
-    if client:
-        console.print(f"[green]Modo:[/green] API en la nube — [bold]{servicio}[/bold] (sin carga local)")
-        texto, segmentos = transcribir_con_api(ruta_audio, client, model_name)
-    else:
+    cliente = cliente_transcripcion()
+    if cliente.es_local:
         console.print("[yellow]Modo:[/yellow] Whisper local en CPU (lento — agrega GROQ_API_KEY al .env para acelerar)")
-        texto, segmentos = transcribir_local(ruta_audio, modelo)
+    else:
+        console.print(f"[green]Modo:[/green] API en la nube — [bold]{cliente.servicio}[/bold] (sin carga local)")
 
-    if not texto.strip():
-        console.print("[red]No se obtuvo texto. Verifica el audio.[/red]")
+    opciones = OpcionesProceso(contexto=cargar_contexto(), modelo_local=modelo, sin_analisis=sin_analisis)
+    try:
+        resultado = procesar_audio(ruta_audio, opciones, _mostrar_progreso)
+    except ErrorTranscripcion as e:
+        console.print(f"[red]{e}[/red]")
         return
 
-    if sin_analisis:
-        console.print("[dim]Análisis DeepSeek omitido (--sin-analisis).[/dim]")
-        analisis = {}
-    else:
-        analisis = analizar_con_deepseek(texto, ruta_audio.stem)
-    carpeta = guardar_resultados(ruta_audio, texto, segmentos, analisis)
+    console.print(f"[green]Duración total:[/green] {resultado.duracion_segundos/60:.1f} minutos")
+    for aviso in resultado.advertencias:
+        console.print(f"[yellow]Aviso: {aviso}[/yellow]")
+
+    carpeta = guardar_resultados(resultado, TRANSCRIPCIONES_DIR)
 
     tabla = Table(title="Archivos generados")
     tabla.add_column("Archivo", style="cyan")
@@ -426,6 +161,7 @@ def procesar_archivo(ruta_audio: Path, modelo: str = "base", forzar: bool = Fals
 # ---------------------------------------------------------------------------
 
 def main():
+    global CONTEXTO_FILE
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -433,10 +169,16 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Ejemplos:
-  python transcribir.py                              # Todos los audios nuevos
-  python transcribir.py "AUDIO REUNION.m4a"          # Archivo específico
-  python transcribir.py --listar                     # Ver audios y estado
-  python transcribir.py --forzar                     # Re-procesar aunque ya exista
+  python transcribir.py --listar-contextos                        # Ver contextos disponibles
+  python transcribir.py -c observatorio                           # Todos los audios nuevos
+  python transcribir.py "AUDIO REUNION.m4a" -c observatorio       # Archivo específico
+  python transcribir.py "Entregable.mp4" -c entregas              # Otro contexto
+  python transcribir.py "audio.m4a" --sin-contexto                # Sin contexto
+  python transcribir.py --listar                                  # Ver audios y estado
+  python transcribir.py "audio.m4a" -c observatorio --forzar      # Re-procesar
+
+El contexto (--contexto/-c) es obligatorio: mejora la precisión de Whisper con los
+nombres propios y el vocabulario técnico, y alimenta el análisis posterior.
 
 Modos de transcripción (en orden de preferencia):
   1. Groq API     — agrega GROQ_API_KEY en .env  (gratis, rápido)
@@ -454,14 +196,62 @@ Modos de transcripción (en orden de preferencia):
     parser.add_argument("--listar", "-l", action="store_true", help="Listar audios disponibles")
     parser.add_argument("--forzar", "-f", action="store_true", help="Reprocesar aunque ya exista transcripción")
     parser.add_argument("--sin-analisis", action="store_true", help="Omitir análisis con DeepSeek")
+    parser.add_argument(
+        "--contexto", "-c",
+        help="Contexto a usar: alias (ej. observatorio, entregas) o ruta a un .txt. "
+             "Obligatorio salvo con --sin-contexto o --listar",
+    )
+    parser.add_argument(
+        "--sin-contexto", action="store_true",
+        help="Transcribir sin contexto (menor precisión en nombres y vocabulario técnico)",
+    )
+    parser.add_argument(
+        "--listar-contextos", action="store_true",
+        help="Listar los contextos disponibles y salir",
+    )
 
     args = parser.parse_args()
 
-    _, _, servicio = _get_cliente_transcripcion()
+    if args.listar_contextos:
+        disponibles = listar_contextos()
+        if not disponibles:
+            console.print(f"[yellow]No hay archivos contexto*.txt en:[/yellow] {PROYECTO_DIR}")
+            return
+        tabla = Table(title=f"Contextos disponibles ({len(disponibles)})")
+        tabla.add_column("Alias", style="cyan")
+        tabla.add_column("Archivo")
+        tabla.add_column("Primera línea", style="dim")
+        for alias, ruta in disponibles.items():
+            primera = ruta.read_text(encoding="utf-8").strip().splitlines()
+            resumen = (primera[0][:70] + "…") if primera and len(primera[0]) > 70 else (primera[0] if primera else "(vacío)")
+            tabla.add_row(alias, ruta.name, resumen)
+        console.print(tabla)
+        return
+
+    if not args.listar:
+        if args.contexto and args.sin_contexto:
+            console.print("[red]--contexto y --sin-contexto son mutuamente excluyentes.[/red]")
+            sys.exit(1)
+        if args.contexto:
+            CONTEXTO_FILE = resolver_contexto(args.contexto)
+        elif not args.sin_contexto:
+            console.print("[red]Falta indicar el contexto de la transcripción (--contexto).[/red]")
+            disponibles = listar_contextos()
+            if disponibles:
+                console.print("\n[bold]Contextos disponibles:[/bold]")
+                for alias, ruta in disponibles.items():
+                    console.print(f"  [cyan]{alias}[/cyan]  →  {ruta.name}")
+                console.print(f"\nEjemplo: [dim]python transcribir.py \"audio.m4a\" --contexto "
+                              f"{next(iter(disponibles))}[/dim]")
+            else:
+                console.print(f"[yellow]No hay archivos contexto*.txt en {PROYECTO_DIR}[/yellow]")
+            console.print("\nPara transcribir sin contexto: [dim]--sin-contexto[/dim]")
+            sys.exit(1)
+
     analisis_label = "Ninguno (--sin-analisis)" if args.sin_analisis else "DeepSeek"
     console.print(Panel(
         f"[bold cyan]Transcriptor de Reuniones[/bold cyan]\n"
-        f"Transcripción: [bold]{servicio}[/bold]  |  Análisis: {analisis_label}",
+        f"Transcripción: [bold]{cliente_transcripcion().servicio}[/bold]  |  Análisis: {analisis_label}",
         style="cyan",
     ))
 

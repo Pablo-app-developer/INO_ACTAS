@@ -1,0 +1,11 @@
+CONTEXTO: Entregable semanal del desarrollo de Datamet 2.0 para el Instituto Neumológico del Oriente (INO), Colombia. Video en el que el desarrollador muestra y explica los avances de la semana sobre el módulo de rutas de programas integrales, con énfasis en la ruta de Asma y en rehabilitación pulmonar.
+
+PARTICIPANTES:
+- Diego: desarrollador de Datamet 2.0.
+- Pablo Ramírez: gestor de datos, revisa las entregas.
+- Ximena Landinez: referente clínica de programas integrales (mencionada).
+- Ing. Rafael Ortiz: líder técnico (mencionado).
+- Olga Lucía Ramírez: auxiliar de datos (mencionada).
+
+VOCABULARIO TÉCNICO FRECUENTE:
+Datamet, Datamet 2.0, Medicloud, INO, ruta, rutas, programas integrales, estación, estaciones, estación cero, parametrización, parametrizar, servicios, valoración inicial, valoración final, sesión de control, sesiones prescritas, formulario, formularios, control de versiones, alertas, adherencia, egreso, ingreso, creación de paciente, asignación de ruta, EPS, gestor, rehabilitador, rehabilitadora, rehabilitación pulmonar, caminata de 6 minutos, espirometría, DLCO, capacidad de difusión, ergoespirometría, exacerbaciones, cuestionario de calidad de vida, St. George, SGRQ, escala de Borg, disnea, signos vitales, saturación de oxígeno, entrenamiento aeróbico, prueba de resistencia, sit to stand, isotime, teleconsulta, pediátrico, Ecopetrol, dashboard, Power BI, JSON, tablas relacionales, backend, frontend, API, repositorio, GitHub, commit, despliegue, Docker, dockerizar, Render, Hostinger, agenda, turnos, responsive, base de datos, PostgreSQL, migración, cronograma, entregable.

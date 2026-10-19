@@ -1,0 +1,47 @@
+Video de documentación del cargo de Gestor de Datos del Instituto Neumológico del Oriente (INO): explicación del script que carga la información de cartera a BigQuery. Habla Diego, gestor de datos saliente. Términos: cartera, cartera de edades, coordinadora de cartera, ownCloud, BigQuery, script, cargue, carga, tabla, dataset, proyecto, consulta, query, Python, pandas, Excel, hoja, tbl_cartera, tbl_cartera_edades, nit, razon_social, fecha, facturacion, recaudo, cartera_inicial, cartera_final, cxc_promedio, calculo_rotacion, rotacion_dias, clasificacion_entidad, clasificacion_cartera, rangos de edad 0 a 30, 31 a 60, 61 a 90, 91 a 120, 121 a 180, 181 a 360, más de 361, valor_total, EPS, IPS, clínicas, FOSCAL, FOSUNAB, SANA, cuentas por cobrar, rotación, recaudo, facturación, Looker, Data Studio, credenciales, cuenta de servicio.
+
+---
+
+CONTEXTO AMPLIADO (alimenta el análisis posterior; Whisper solo lee los primeros 800 caracteres, por eso lo esencial va arriba)
+
+PROPÓSITO DEL VIDEO
+Pieza de documentación interna del cargo de Gestor de Datos, grabada para dejar explicado el procedimiento a quien ocupe el puesto. No es una reunión: es una explicación paso a paso con pantalla compartida.
+
+EL PROCESO DOCUMENTADO — Script Cartera → BigQuery
+Frecuencia: bajo demanda, normalmente una vez al mes.
+
+Pasos:
+1. Verificar que la coordinadora de cartera haya cargado los archivos de Excel en la carpeta
+   C:\Users\diego.lozano\ownCloud\Cartera
+2. Ejecutar el proceso de carga a BigQuery siguiendo lo mostrado en este video.
+
+ARCHIVOS DE ENTRADA
+Cada mes la coordinadora deja dos libros de Excel, nombrados con el número del mes y el nombre del mes:
+- "<n> - tbl_cartera_<mes>.xlsx"
+- "<n> - tbl_cartera_edades_<mes>.xlsx"
+Los archivos ya procesados se trasladan a la subcarpeta "subidas".
+
+ESTRUCTURA DE LAS TABLAS
+tbl_cartera: nit, razon_social, fecha, facturacion, recuado (así aparece en el encabezado, con la errata),
+cartera_inicial, cartera_final, cxc_promedio, calculo_rotacion, rotacion_dias, clasificacion_entidad,
+clasificacion_cartera.
+
+tbl_cartera_edades: mes, razon_social, clasificacion_entidad, clasificacion_cartera y los rangos de
+edad de la cartera: 0_a_30, 31_a_60, 61_a_90, 91_a_120, 121_a_180, 181_a_360, mas_361, valor_total.
+
+VALORES FRECUENTES
+clasificacion_entidad: EPS, CLINICAS IPS PRIVADAS, entre otras.
+clasificacion_cartera: SANA, SANA FOSCAL/FOSUNAB, entre otras.
+Entidades que suelen aparecer: Fundación Oftalmológica de Santander (FOSCAL), FOSUNAB, Nueva EPS,
+Sanitas, Salud Total, Ecopetrol, SURA.
+
+VOCABULARIO TÉCNICO Y FINANCIERO
+cartera, cuentas por cobrar, CxC, rotación de cartera, días de rotación, recaudo, facturación,
+cartera inicial, cartera final, edades de cartera, glosa, conciliación, pagador, asegurador,
+NIT, razón social, periodo, corte mensual.
+
+VOCABULARIO TÉCNICO DE DATOS
+BigQuery, dataset, tabla, esquema, tipos de dato, append, truncar, sobrescribir, consulta, query, SQL,
+Python, pandas, DataFrame, script, notebook, Google Colab, Visual Studio Code, credenciales,
+cuenta de servicio, archivo JSON de credenciales, proyecto de Google Cloud, Looker, Data Studio,
+Minería INO, DataINO, ownCloud, ruta, carpeta, ejecución, log, error, validación.

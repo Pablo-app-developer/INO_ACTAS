@@ -1,0 +1,23 @@
+Capacitación sobre la Cuenta de Alto Costo (CAC) dictada por CDI S.A.S. al INO, Bucaramanga, Colombia. Hablan: Margarita (gerente de CDI), Julio Pardo (líder de sistemas informáticos de CDI), Pablo Ramírez, María Angélica Bayona, Dr. Fabio Bolívar, Dra. Diana Cano. Términos: Cuenta de Alto Costo, CAC, SISCAC, CDI, INO, VIH, EPOC, Resolución 273 de 2019, Decreto 2699 de 2007, instructivo, periodo de observación, fecha de corte, validador, auditoría, hallazgos, soportes, inconsistencias, novedad del usuario, BDUA, SIVIGILA, EAPB, EPS, IPS, TAR, tratamiento antirretroviral, CD4, carga viral, carga viral suprimida, indetectabilidad, PPD, tuberculosis, sífilis, hepatitis C, tamizaje, infectología, telexperticia, telemedicina, ETMI Plus, ONUSIDA, estadio clínico, abandono, gestantes, menores expuestos, CUM, diccionario de variables, historia clínica.
+
+---
+
+CONTEXTO AMPLIADO (alimenta el análisis posterior; Whisper solo lee los primeros 800 caracteres, por eso lo esencial va arriba)
+
+CONTEXTO: Reunión sostenida en las instalaciones de CDI S.A.S. — Centro de Atención y Diagnóstico de Enfermedades Infecciosas, que capacitó al INO sobre la elaboración de los informes y todo lo relacionado con atender el requerimiento de la Cuenta de Alto Costo, en su caso particular para pacientes con diagnóstico de VIH. Para el INO la finalidad es trasladar el conocimiento que CDI ha acumulado en estos años reportando al gobierno, pero aplicado al diagnóstico de EPOC.
+
+PARTICIPANTES:
+- Margarita: gerente de CDI. Dictó la primera parte de la capacitación (su audio es muy débil). Autora de las diapositivas "Variables CAC en VIH — Experiencia CDI.pptx".
+- Julio Pardo: líder de sistemas informáticos de CDI. Dictó la segunda parte. Autor de las diapositivas "Presentacion_CAC_Lecciones_VIH.pptx".
+- Pablo Ramírez: profesional de datos del INO.
+- María Angélica Bayona: profesional de Sistemas de Gestión del INO.
+- Dr. Fabio Bolívar: director científico del INO.
+- Dra. Diana Cano: médica internista neumóloga del INO.
+
+ENTIDADES Y PLATAFORMAS: Cuenta de Alto Costo (CAC), SISCAC (plataforma de cargue), mesa de ayuda CAC, cuentadealtocosto.org, BDUA, SIVIGILA, Ministerio de Salud, EAPB, EPS, IPS, Nueva EPS, FOMAG, Ecopetrol, ONUSIDA, Sentencia T-760. Sedes de CDI: Bucaramanga, Cúcuta, Barrancabermeja, más telemedicina.
+
+MARCO NORMATIVO: Decreto 2699 de 2007 (crea la CAC), Resolución 273 de 2019 (reporte de VIH), instructivo de reporte, periodo de observación (1 de febrero al 31 de enero), fecha de corte, apertura del validador el 1 de febrero, cierre del reporte el 15 de abril. Patologías con reporte a la CAC: VIH, cáncer, enfermedad renal crónica, hemofilia, artritis reumatoide, hepatitis C.
+
+VARIABLES Y CLÍNICA DE VIH: 193 campos por persona (archivo con VIH) y 43 campos (archivo sin VIH); variables V1 a V97; V77 (en TAR al corte), V76.1 (carga viral suprimida), V75–V76 (CD4 y carga viral), V53.3–V53.4 (médico experto e infectólogo), V83–V85 (tuberculosis, PPD, TB latente), V84 (PPD en 12 meses), V86–V89 (sífilis y hepatitis), V97 (novedad del usuario), V19–V31 (gestantes y menores expuestos), V55 (estadio clínico). TAR o tratamiento antirretroviral, esquema, dispensación, CD4, carga viral, prueba presuntiva y confirmatoria, ELISA de tercera y cuarta generación, PPD, tamizaje, profilaxis del recién nacido, fórmula láctea, estadio clínico 3, abandono (28 días sin volver), comité de indetectabilidad, ETMI Plus (transmisión materno-infantil), población clave, etnia, gestación, CUM, riesgo cardiovascular.
+
+CALIDAD DEL DATO Y PROCESO: historia clínica, HC, sistema de captura, campos estructurados, listas de valores, validaciones de estructura, formato, coherencia y consistencia entre periodos, validador propio, extracción, corrección en la fuente, matriz de hallazgos, auditoría continua con inteligencia artificial, diccionario de variables, referente clínico, dueño del dato, base VIH mensual, conciliación de inventario, búsqueda activa, demanda inducida, trabajo social, adherencia, indicadores, tablero, línea base, soportes, acuse de recibido, control de versiones, cargue de prueba, codificación de fechas (AAAA-MM-DD, 1799-01-01 no se realizó, 1845-01-01 no aplica), NOAP, NONE.
