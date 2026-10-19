@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar sesión · Transcriptor de reuniones</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="pagina-login">
+  <main class="login">
+    <header class="login-cab">
+      <h1>Transcriptor de reuniones</h1>
+      <p>Instituto Neumológico del Oriente</p>
+    </header>
+
+    <section class="tarjeta" aria-labelledby="t-login">
+      <h2 id="t-login">Iniciar sesión</h2>
+      <form id="form-login" novalidate>
+        <div class="campo">
+          <label for="usuario">Usuario</label>
+          <input type="text" id="usuario" name="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
+        </div>
+        <div class="campo">
+          <label for="clave">Contraseña</label>
+          <input type="password" id="clave" name="clave" autocomplete="current-password" required>
+        </div>
+        <p class="error-form" id="error-login" role="alert" hidden></p>
+        <button type="submit" class="btn primario ancho" id="btn-entrar">Entrar</button>
+      </form>
+      <p class="ayuda nota-login">¿No tienes usuario o olvidaste tu contraseña? Solicítalo a quien administra la herramienta.</p>
+    </section>
+  </main>
+  <script src="/static/login.js"></script>
+</body>
+</html>

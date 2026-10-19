@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transcriptor de reuniones</title>
+  <meta name="description" content="Convierte el audio de una reunión en transcripción e informe.">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="cabecera">
+    <div class="contenedor cabecera-fila">
+      <div>
+        <h1>Transcriptor de reuniones</h1>
+        <p>Instituto Neumológico del Oriente</p>
+      </div>
+      <div class="cuenta" id="cuenta" hidden>
+        <span class="cuenta-nombre" id="usuario-nombre"></span>
+        <button type="button" class="btn chico" id="btn-clave">Cambiar contraseña</button>
+        <button type="button" class="btn chico" id="btn-salir">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="contenedor">
+    <div id="avisos" class="avisos" role="status" aria-live="polite"></div>
+
+    <section aria-labelledby="t-nueva" class="tarjeta">
+      <h2 id="t-nueva">Nueva transcripción</h2>
+
+      <form id="form" novalidate>
+        <!-- 1. Archivo -->
+        <fieldset class="paso">
+          <legend><span class="num">1</span> Archivo de la reunión</legend>
+          <label class="zona" id="zona" for="archivo">
+            <input type="file" id="archivo" class="oculto-visual" aria-describedby="ayuda-archivo">
+            <span class="zona-titulo" id="zona-titulo">Arrastra el archivo aquí o haz clic para elegirlo</span>
+            <span class="zona-ayuda" id="ayuda-archivo">Audio o video. Máximo <span id="max-mb">2048</span> MB.</span>
+          </label>
+          <p class="formatos" id="formatos"></p>
+        </fieldset>
+
+        <!-- 2. Contexto -->
+        <fieldset class="paso">
+          <legend><span class="num">2</span> Contexto de la reunión</legend>
+          <p class="ayuda">El contexto ayuda a reconocer bien los nombres y la terminología, y mejora el informe.</p>
+
+          <div class="campo">
+            <label for="selector">¿Qué tipo de reunión es?</label>
+            <select id="selector"></select>
+          </div>
+
+          <div id="editor" class="editor" hidden>
+            <div class="campo">
+              <label for="c-nombre">Nombre</label>
+              <input type="text" id="c-nombre" maxlength="120" autocomplete="off">
+            </div>
+
+            <div class="campo">
+              <label for="c-descripcion">Descripción <span class="opcional">(opcional)</span></label>
+              <textarea id="c-descripcion" rows="2" placeholder="De qué trata esta reunión y quién la convoca"></textarea>
+            </div>
+
+            <details class="bloque" id="det-participantes">
+              <summary>Participantes <span class="contador" id="cnt-participantes"></span></summary>
+              <p class="ayuda">Quienes hablan y quienes solo son mencionados. El cargo ayuda a atribuir correctamente las intervenciones.</p>
+              <div class="tabla-scroll">
+                <table class="participantes">
+                  <thead>
+                    <tr><th scope="col">Nombre</th><th scope="col">Cargo o rol</th><th scope="col">Asiste</th><th scope="col"><span class="oculto-visual">Quitar</span></th></tr>
+                  </thead>
+                  <tbody id="lista-participantes"></tbody>
+                </table>
+              </div>
+              <button type="button" class="btn secundario" id="btn-add-participante">+ Agregar participante</button>
+            </details>
+
+            <details class="bloque" id="det-claves">
+              <summary>Palabras clave <span class="contador" id="cnt-claves"></span></summary>
+              <p class="ayuda">Siglas, nombres propios y términos técnicos. Escribe una y pulsa Enter, o pega una lista separada por comas.</p>
+              <div class="chips" id="chips"></div>
+              <input type="text" id="c-clave" aria-label="Agregar palabra clave" placeholder="Escribe una palabra clave y pulsa Enter" autocomplete="off">
+            </details>
+
+            <details class="bloque" id="det-notas">
+              <summary>Notas adicionales <span class="opcional">(opcional)</span></summary>
+              <p class="ayuda">Cualquier otra información que deba tener en cuenta el informe: normas, sedes, aclaraciones.</p>
+              <textarea id="c-notas" rows="4" aria-label="Notas adicionales"></textarea>
+            </details>
+
+            <div class="acciones-contexto">
+              <span class="estado-contexto" id="estado-contexto" aria-live="polite"></span>
+              <label class="check pleno" id="lbl-institucional" hidden>
+                <input type="checkbox" id="chk-institucional">
+                Compartir con todo el INO al guardar como plantilla nueva
+              </label>
+              <button type="button" class="btn secundario" id="btn-guardar" hidden>Guardar cambios en la plantilla</button>
+              <button type="button" class="btn secundario" id="btn-guardar-nueva">Guardar como plantilla nueva</button>
+              <button type="button" class="btn peligro" id="btn-eliminar-plantilla" hidden>Eliminar plantilla</button>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- 3. Opciones -->
+        <fieldset class="paso">
+          <legend><span class="num">3</span> Resultado</legend>
+          <label class="check">
+            <input type="checkbox" id="generar-acta" checked>
+            Redactar el acta en Word (formato del INO)
+          </label>
+          <div class="datos-acta" id="datos-acta">
+            <div class="campo">
+              <label for="acta-numero">Número del acta <span class="opcional">(opcional)</span></label>
+              <input type="text" id="acta-numero" maxlength="20" placeholder="Ej. 031" autocomplete="off">
+            </div>
+            <div class="campo">
+              <label for="acta-fecha">Fecha de la reunión</label>
+              <input type="date" id="acta-fecha" required>
+            </div>
+            <div class="campo">
+              <label for="acta-hora">Hora de inicio <span class="opcional">(opcional)</span></label>
+              <input type="text" id="acta-hora" maxlength="40" placeholder="Ej. 8:30 a. m." autocomplete="off">
+            </div>
+          </div>
+          <label class="check">
+            <input type="checkbox" id="sin-analisis">
+            Solo transcribir (sin informe ni acta)
+          </label>
+        </fieldset>
+
+        <div class="envio">
+          <button type="submit" class="btn primario" id="btn-enviar">Procesar reunión</button>
+          <div class="subida" id="subida" hidden>
+            <div class="barra" role="progressbar" aria-label="Subida del archivo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="subida-barra"></span></div>
+            <span id="subida-texto"></span>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section aria-labelledby="t-historial" class="tarjeta">
+      <h2 id="t-historial">Mis transcripciones</h2>
+      <p class="vacio" id="historial-vacio" hidden>Aún no hay transcripciones. Sube un archivo para empezar.</p>
+      <ul class="trabajos" id="trabajos"></ul>
+    </section>
+  </main>
+
+  <dialog id="dlg-clave" aria-labelledby="dlg-clave-titulo">
+    <form id="form-clave" novalidate>
+      <h2 id="dlg-clave-titulo">Cambiar contraseña</h2>
+      <div class="campo">
+        <label for="clave-actual">Contraseña actual</label>
+        <input type="password" id="clave-actual" autocomplete="current-password" required>
+      </div>
+      <div class="campo">
+        <label for="clave-nueva">Contraseña nueva <span class="opcional">(mínimo 10 caracteres)</span></label>
+        <input type="password" id="clave-nueva" autocomplete="new-password" minlength="10" required>
+      </div>
+      <div class="campo">
+        <label for="clave-repetir">Repite la contraseña nueva</label>
+        <input type="password" id="clave-repetir" autocomplete="new-password" required>
+      </div>
+      <p class="error-form" id="error-clave" role="alert" hidden></p>
+      <div class="acciones-dialogo">
+        <button type="button" class="btn" id="clave-cancelar">Cancelar</button>
+        <button type="submit" class="btn primario" id="clave-guardar">Guardar contraseña</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="visor" aria-labelledby="visor-titulo">
+    <div class="visor-cab">
+      <h2 id="visor-titulo">Informe</h2>
+      <button type="button" class="btn secundario" id="visor-cerrar">Cerrar</button>
+    </div>
+    <pre id="visor-texto" tabindex="0"></pre>
+  </dialog>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
